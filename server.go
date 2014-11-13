@@ -7,18 +7,25 @@ import (
 
 type Server struct {
 	*rpc.Server
-	ln net.Listener
+	ln       net.Listener
+	filePath string
 }
 
-func NewServer(addr string) (*Server, error) {
+func NewServer(addr string, filePath string) (*Server, error) {
+	store, err := NewStore(filePath)
+	if err != nil {
+		return nil, err
+	}
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	server := &Server{
-		Server: rpc.NewServer(),
-		ln:     ln,
+		Server:   rpc.NewServer(),
+		ln:       ln,
+		filePath: filePath,
 	}
+	server.Register(store)
 	go server.start()
 	return server, nil
 }

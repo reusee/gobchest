@@ -17,6 +17,16 @@ func NewClient(addr string) (*Client, error) {
 	return client, nil
 }
 
+func (c *Client) Set(key string, value interface{}) error {
+	var response Response
+	err := c.Call("Store.Set", Request{
+		Type:  Set,
+		Key:   key,
+		Value: value,
+	}, &response)
+	return err
+}
+
 func (c *Client) Close() {
 	c.Client.Close()
 }
