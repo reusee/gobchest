@@ -9,6 +9,7 @@ type Server struct {
 	*rpc.Server
 	ln       net.Listener
 	filePath string
+	store    *Store
 }
 
 func NewServer(addr string, filePath string) (*Server, error) {
@@ -24,6 +25,7 @@ func NewServer(addr string, filePath string) (*Server, error) {
 		Server:   rpc.NewServer(),
 		ln:       ln,
 		filePath: filePath,
+		store:    store,
 	}
 	server.Register(store)
 	go server.start()

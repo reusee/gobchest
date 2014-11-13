@@ -119,4 +119,7 @@ func TestSet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if server.store.data["foo"] != "foo" {
+		t.Fatal("foo is not foo")
+	}
 }
