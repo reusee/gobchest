@@ -42,6 +42,16 @@ func (s *Store) Set(req *Request, response *Response) error {
 	s.lock.Lock()
 	s.data[req.Key] = req.Value
 	s.lock.Unlock()
-	response.Ok = true
+	return nil
+}
+
+func (s *Store) Get(req *Request, response *Response) error {
+	s.lock.RLock()
+	v, ok := s.data[req.Key]
+	if !ok {
+		return fmt.Errorf("key not found: %s", req.Key)
+	}
+	response.Value = v
+	s.lock.RUnlock()
 	return nil
 }

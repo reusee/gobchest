@@ -14,5 +14,5 @@ type Request struct {
 }
 
 type Response struct {
-	Ok bool
+	Value interface{}
 }

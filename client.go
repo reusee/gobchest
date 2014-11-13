@@ -27,6 +27,18 @@ func (c *Client) Set(key string, value interface{}) error {
 	return err
 }
 
+func (c *Client) Get(key string) (interface{}, error) {
+	var response Response
+	err := c.Call("Store.Get", Request{
+		Type: Get,
+		Key:  key,
+	}, &response)
+	if err != nil {
+		return nil, err
+	}
+	return response.Value, nil
+}
+
 func (c *Client) Close() {
 	c.Client.Close()
 }

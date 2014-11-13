@@ -109,7 +109,7 @@ func TestReopen(t *testing.T) {
 	}
 }
 
-func TestSet(t *testing.T) {
+func TestSetGet(t *testing.T) {
 	server, addr := setupTestServer(t)
 	defer server.Close()
 	client := setupTestClient(t, addr)
@@ -120,6 +120,19 @@ func TestSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	if server.store.data["foo"] != "foo" {
-		t.Fatal("foo is not foo")
+		t.Fatal("Set: foo is not foo")
+	}
+
+	v, err := client.Get("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.(string) != "foo" {
+		t.Fatal("Get: foo is not foo")
+	}
+
+	v, err = client.Get("keynotexists")
+	if err == nil {
+		t.Fatal("Get: should fail")
 	}
 }
