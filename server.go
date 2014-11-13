@@ -1,4 +1,4 @@
-package store
+package gobchest
 
 import (
 	"net"
@@ -12,13 +12,13 @@ type Server struct {
 	ln        net.Listener
 	filePath  string
 	addr      string
-	store     *Store
+	chest     *Chest
 	stop      chan struct{}
 	closeOnce sync.Once
 }
 
 func NewServer(addr string, filePath string) (*Server, error) {
-	store, err := NewStore(filePath)
+	chest, err := NewChest(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -31,17 +31,17 @@ func NewServer(addr string, filePath string) (*Server, error) {
 		ln:       ln,
 		filePath: filePath,
 		addr:     addr,
-		store:    store,
+		chest:    chest,
 		stop:     make(chan struct{}),
 	}
-	server.Register(store)
+	server.Register(chest)
 	go server.saver()
 	go server.accept()
 	return server, nil
 }
 
 func (s *Server) SetErrorHandler(fn func(error)) {
-	s.store.handleError = fn
+	s.chest.handleError = fn
 }
 
 func (s *Server) saver() {
@@ -49,22 +49,22 @@ func (s *Server) saver() {
 	for {
 		select {
 		case <-s.stop:
-			s.store.save()
+			s.chest.save()
 			return
-		case <-s.store.sigSave:
-			if time.Now().Sub(s.store.saveTime) > time.Second {
-				s.store.save()
+		case <-s.chest.sigSave:
+			if time.Now().Sub(s.chest.saveTime) > time.Second {
+				s.chest.save()
 			}
 		case <-ticker.C:
-			if s.store.dirty {
-				s.store.save()
+			if s.chest.dirty {
+				s.chest.save()
 			}
 		}
 	}
 }
 
 func (s *Server) Save() {
-	s.store.save()
+	s.chest.save()
 }
 
 func (s *Server) accept() {

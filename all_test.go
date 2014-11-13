@@ -1,4 +1,4 @@
-package store
+package gobchest
 
 import (
 	"encoding/gob"
@@ -12,7 +12,7 @@ import (
 )
 
 func randomFilePath() string {
-	return filepath.Join(os.TempDir(), "golang-store-test-file-"+fmt.Sprintf("%d", rand.Uint32()))
+	return filepath.Join(os.TempDir(), "golang-gobchest-test-file-"+fmt.Sprintf("%d", rand.Uint32()))
 }
 
 func randomAddr() string {
@@ -149,7 +149,7 @@ func TestSaveFail(t *testing.T) {
 func TestInvalidValue(t *testing.T) {
 	server, _ := setupTestServer(t)
 	gob.Register(new(func()))
-	server.store.Data["foo"] = func() {} // not encodable
+	server.chest.Data["foo"] = func() {} // not encodable
 	errored := false
 	server.SetErrorHandler(func(error) {
 		errored = true
@@ -170,7 +170,7 @@ func TestSetGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if server.store.Data["foo"] != "foo" {
+	if server.chest.Data["foo"] != "foo" {
 		t.Fatal("Set: foo is not foo")
 	}
 

@@ -1,4 +1,4 @@
-package store
+package gobchest
 
 type RequestType uint8
 

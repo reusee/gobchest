@@ -1,4 +1,4 @@
-package store
+package gobchest
 
 import "net/rpc"
 
@@ -19,7 +19,7 @@ func NewClient(addr string) (*Client, error) {
 
 func (c *Client) Set(key string, value interface{}) error {
 	var response Response
-	err := c.Call("Store.Set", Request{
+	err := c.Call("Chest.Set", Request{
 		Type:  Set,
 		Key:   key,
 		Value: value,
@@ -29,7 +29,7 @@ func (c *Client) Set(key string, value interface{}) error {
 
 func (c *Client) Get(key string) (interface{}, error) {
 	var response Response
-	err := c.Call("Store.Get", Request{
+	err := c.Call("Chest.Get", Request{
 		Type: Get,
 		Key:  key,
 	}, &response)

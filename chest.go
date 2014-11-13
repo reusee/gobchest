@@ -1,4 +1,4 @@
-package store
+package gobchest
 
 import (
 	"encoding/gob"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type Store struct {
+type Chest struct {
 	lock        sync.RWMutex
 	Data        map[string]interface{}
 	filePath    string
@@ -19,7 +19,7 @@ type Store struct {
 	saveTime    time.Time
 }
 
-func NewStore(filePath string) (*Store, error) {
+func NewChest(filePath string) (*Chest, error) {
 	info, err := os.Stat(filePath)
 	var file *os.File
 	if err != nil {
@@ -34,7 +34,7 @@ func NewStore(filePath string) (*Store, error) {
 			return nil, err
 		}
 	}
-	store := &Store{
+	chest := &Chest{
 		Data:     make(map[string]interface{}),
 		filePath: filePath,
 		handleError: func(err error) {
@@ -44,17 +44,17 @@ func NewStore(filePath string) (*Store, error) {
 	}
 	// load from file
 	if file != nil {
-		err = gob.NewDecoder(file).Decode(store)
+		err = gob.NewDecoder(file).Decode(chest)
 		if err != nil {
 			file.Close()
 			return nil, err
 		}
 		file.Close()
 	}
-	return store, nil
+	return chest, nil
 }
 
-func (s *Store) save() {
+func (s *Chest) save() {
 	tmpFilePath := fmt.Sprintf("%s.tmp.%d", s.filePath, rand.Uint32())
 	tmpFile, err := os.Create(tmpFilePath)
 	if err != nil {
@@ -75,7 +75,7 @@ func (s *Store) save() {
 	s.saveTime = time.Now()
 }
 
-func (s *Store) Set(req *Request, response *Response) error {
+func (s *Chest) Set(req *Request, response *Response) error {
 	s.lock.Lock()
 	s.Data[req.Key] = req.Value
 	s.lock.Unlock()
@@ -84,7 +84,7 @@ func (s *Store) Set(req *Request, response *Response) error {
 	return nil
 }
 
-func (s *Store) Get(req *Request, response *Response) error {
+func (s *Chest) Get(req *Request, response *Response) error {
 	s.lock.RLock()
 	v, ok := s.Data[req.Key]
 	if !ok {
