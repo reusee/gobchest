@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -78,6 +79,7 @@ func (s *Chest) save() {
 func (s *Chest) Set(req *Request, response *Response) error {
 	s.lock.Lock()
 	s.Data[req.Key] = req.Value
+
 	s.lock.Unlock()
 	s.sigSave <- struct{}{}
 	s.dirty = true
@@ -92,5 +94,28 @@ func (s *Chest) Get(req *Request, response *Response) error {
 	}
 	response.Value = v
 	s.lock.RUnlock()
+	return nil
+}
+
+func (s *Chest) ListAppend(req *Request, response *Response) error {
+	s.lock.Lock()
+	v, ok := s.Data[req.Key]
+	if !ok {
+		value := reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf((*req.Value.(*[]interface{}))[0])), 0, 0)
+		for _, e := range *req.Value.(*[]interface{}) {
+			value = reflect.Append(value, reflect.ValueOf(e))
+		}
+		s.Data[req.Key] = value.Interface()
+	} else {
+		value := reflect.ValueOf(v)
+		for _, e := range *req.Value.(*[]interface{}) {
+			value = reflect.Append(value, reflect.ValueOf(e))
+		}
+		s.Data[req.Key] = value.Interface()
+	}
+
+	s.lock.Unlock()
+	s.sigSave <- struct{}{}
+	s.dirty = true
 	return nil
 }

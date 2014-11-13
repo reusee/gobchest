@@ -17,6 +17,10 @@ func NewClient(addr string) (*Client, error) {
 	return client, nil
 }
 
+func (c *Client) Close() {
+	c.Client.Close()
+}
+
 func (c *Client) Set(key string, value interface{}) error {
 	var response Response
 	err := c.Call("Chest.Set", Request{
@@ -39,6 +43,12 @@ func (c *Client) Get(key string) (interface{}, error) {
 	return response.Value, nil
 }
 
-func (c *Client) Close() {
-	c.Client.Close()
+func (c *Client) ListAppend(key string, values ...interface{}) error {
+	var response Response
+	err := c.Call("Chest.ListAppend", Request{
+		Type:  ListAppend,
+		Key:   key,
+		Value: values,
+	}, &response)
+	return err
 }

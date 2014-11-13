@@ -226,7 +226,7 @@ func TestPeriodicSave(t *testing.T) {
 			}
 		}()
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 2)
 }
 
 func TestMultipleClient(t *testing.T) {
@@ -243,4 +243,47 @@ func TestMultipleClient(t *testing.T) {
 		}()
 	}
 	time.Sleep(time.Second * 1)
+}
+
+func TestListAppend(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	client := setupTestClient(t, addr)
+	defer client.Close()
+
+	err := client.ListAppend("foo", 1, 2, 3, 4, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := client.Get("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := v.([]int); !ok {
+		t.Fatal("type not match")
+	} else {
+		for i := 1; i <= 5; i++ {
+			if v[i-1] != i {
+				t.Fatal("list not match")
+			}
+		}
+	}
+
+	err = client.ListAppend("foo", 6, 7, 8, 9, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err = client.Get("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := v.([]int); !ok {
+		t.Fatal("type not match")
+	} else {
+		for i := 1; i <= 10; i++ {
+			if v[i-1] != i {
+				t.Fatal("list not match")
+			}
+		}
+	}
 }
