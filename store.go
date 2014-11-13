@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"time"
 )
 
 type Store struct {
@@ -13,6 +14,9 @@ type Store struct {
 	Data        map[string]interface{}
 	filePath    string
 	handleError func(error)
+	sigSave     chan struct{}
+	dirty       bool
+	saveTime    time.Time
 }
 
 func NewStore(filePath string) (*Store, error) {
@@ -36,6 +40,7 @@ func NewStore(filePath string) (*Store, error) {
 		handleError: func(err error) {
 			panic(err)
 		},
+		sigSave: make(chan struct{}),
 	}
 	// load from file
 	if file != nil {
@@ -66,12 +71,16 @@ func (s *Store) save() {
 	}
 	tmpFile.Close()
 	os.Rename(tmpFilePath, s.filePath)
+	s.dirty = false
+	s.saveTime = time.Now()
 }
 
 func (s *Store) Set(req *Request, response *Response) error {
 	s.lock.Lock()
 	s.Data[req.Key] = req.Value
 	s.lock.Unlock()
+	s.sigSave <- struct{}{}
+	s.dirty = true
 	return nil
 }
 

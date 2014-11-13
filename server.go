@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/rpc"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -44,6 +45,22 @@ func (s *Server) SetErrorHandler(fn func(error)) {
 }
 
 func (s *Server) saver() {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-s.stop:
+			s.store.save()
+			return
+		case <-s.store.sigSave:
+			if time.Now().Sub(s.store.saveTime) > time.Second {
+				s.store.save()
+			}
+		case <-ticker.C:
+			if s.store.dirty {
+				s.store.save()
+			}
+		}
+	}
 }
 
 func (s *Server) Save() {

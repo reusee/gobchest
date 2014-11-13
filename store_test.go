@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func randomFilePath() string {
@@ -211,4 +212,19 @@ func TestSave(t *testing.T) {
 	if v.(string) != "foo" {
 		t.Fatal("foo is not foo")
 	}
+}
+
+func TestPeriodicSave(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	client := setupTestClient(t, addr)
+	defer client.Close()
+	for i := 0; i < 128; i++ {
+		go func() {
+			for {
+				client.Set("foo", "foo")
+			}
+		}()
+	}
+	time.Sleep(time.Second * 3)
 }
