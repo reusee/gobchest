@@ -10,6 +10,7 @@ type Server struct {
 	*rpc.Server
 	ln        net.Listener
 	filePath  string
+	addr      string
 	store     *Store
 	stop      chan struct{}
 	closeOnce sync.Once
@@ -28,12 +29,25 @@ func NewServer(addr string, filePath string) (*Server, error) {
 		Server:   rpc.NewServer(),
 		ln:       ln,
 		filePath: filePath,
+		addr:     addr,
 		store:    store,
 		stop:     make(chan struct{}),
 	}
 	server.Register(store)
+	go server.saver()
 	go server.accept()
 	return server, nil
+}
+
+func (s *Server) SetErrorHandler(fn func(error)) {
+	s.store.handleError = fn
+}
+
+func (s *Server) saver() {
+}
+
+func (s *Server) Save() {
+	s.store.save()
 }
 
 func (s *Server) accept() {

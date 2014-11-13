@@ -1,7 +1,9 @@
 package store
 
 import (
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -70,22 +72,12 @@ func TestInvalidFilePath(t *testing.T) {
 		t.Fatal("should fail")
 	}
 
-	dirPath := randomFilePath()
-	err = os.Mkdir(dirPath, 0500) // read-only dir
-	if err != nil {
-		t.Fatal(err)
-	}
-	filePath := filepath.Join(dirPath, "foo")
-	_, err = NewServer(randomAddr(), filePath)
-	if err == nil {
-		t.Fatal("should fail")
-	}
-
 	server, err := NewServer(randomAddr(), randomFilePath())
 	if err != nil {
 		t.Fatal(err)
 	}
-	filePath = server.filePath
+	filePath := server.filePath
+	server.Save()
 	err = os.Chmod(filePath, 0000) // make it non-readable
 	if err != nil {
 		t.Fatal(err)
@@ -102,10 +94,68 @@ func TestReopen(t *testing.T) {
 		t.Fatal(err)
 	}
 	filePath := server.filePath
+	server.Save()
 	server.Close()
 	server, err = NewServer(randomAddr(), filePath)
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestInvalidFile(t *testing.T) {
+	filePath := randomFilePath()
+	err := ioutil.WriteFile(filePath, []byte("garbage"), 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = NewServer(randomAddr(), filePath)
+	if err == nil {
+		t.Fatal("should fail")
+	}
+}
+
+func TestSaveFail(t *testing.T) {
+	dirPath := randomFilePath()
+	err := os.Mkdir(dirPath, 0500)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filePath := filepath.Join(dirPath, "foo")
+	server, err := NewServer(randomAddr(), filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	func() {
+		defer func() {
+			if err := recover(); err == nil {
+				t.Fatal("should fail")
+			}
+		}()
+		server.Save()
+	}()
+
+	errored := false
+	server.SetErrorHandler(func(err error) {
+		errored = true
+	})
+	server.Save()
+	if !errored {
+		t.Fatal("should fail")
+	}
+}
+
+func TestInvalidValue(t *testing.T) {
+	server, _ := setupTestServer(t)
+	gob.Register(new(func()))
+	server.store.Data["foo"] = func() {} // not encodable
+	errored := false
+	server.SetErrorHandler(func(error) {
+		errored = true
+	})
+	server.Save()
+	if !errored {
+		t.Fatal("should fail")
 	}
 }
 
@@ -119,7 +169,7 @@ func TestSetGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if server.store.data["foo"] != "foo" {
+	if server.store.Data["foo"] != "foo" {
 		t.Fatal("Set: foo is not foo")
 	}
 
@@ -134,5 +184,31 @@ func TestSetGet(t *testing.T) {
 	v, err = client.Get("keynotexists")
 	if err == nil {
 		t.Fatal("Get: should fail")
+	}
+}
+
+func TestSave(t *testing.T) {
+	server, addr := setupTestServer(t)
+	client := setupTestClient(t, addr)
+	err := client.Set("foo", "foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server.Save()
+	server.Close()
+	server, err = NewServer(randomAddr(), server.filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err = NewClient(server.addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := client.Get("foo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.(string) != "foo" {
+		t.Fatal("foo is not foo")
 	}
 }
