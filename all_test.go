@@ -228,3 +228,19 @@ func TestPeriodicSave(t *testing.T) {
 	}
 	time.Sleep(time.Second * 3)
 }
+
+func TestMultipleClient(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	for i := 0; i < 16; i++ {
+		client := setupTestClient(t, addr)
+		defer client.Close()
+		go func() {
+			for {
+				client.Set("foo", "foo")
+				client.Get("foo")
+			}
+		}()
+	}
+	time.Sleep(time.Second * 1)
+}
