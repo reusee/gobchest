@@ -3,13 +3,16 @@ package store
 import (
 	"net"
 	"net/rpc"
+	"sync"
 )
 
 type Server struct {
 	*rpc.Server
-	ln       net.Listener
-	filePath string
-	store    *Store
+	ln        net.Listener
+	filePath  string
+	store     *Store
+	stop      chan struct{}
+	closeOnce sync.Once
 }
 
 func NewServer(addr string, filePath string) (*Server, error) {
@@ -26,13 +29,14 @@ func NewServer(addr string, filePath string) (*Server, error) {
 		ln:       ln,
 		filePath: filePath,
 		store:    store,
+		stop:     make(chan struct{}),
 	}
 	server.Register(store)
-	go server.start()
+	go server.accept()
 	return server, nil
 }
 
-func (s *Server) start() {
+func (s *Server) accept() {
 	for {
 		conn, err := s.ln.Accept()
 		if err != nil {
@@ -40,8 +44,12 @@ func (s *Server) start() {
 		}
 		go s.ServeConn(conn)
 	}
+	s.Close()
 }
 
 func (s *Server) Close() {
 	s.ln.Close()
+	s.closeOnce.Do(func() {
+		close(s.stop)
+	})
 }
