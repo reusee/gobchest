@@ -1,6 +1,10 @@
 package gobchest
 
-import "net/rpc"
+import (
+	"encoding/gob"
+	"net/rpc"
+	"reflect"
+)
 
 type Client struct {
 	*rpc.Client
@@ -49,6 +53,25 @@ func (c *Client) ListAppend(key string, values ...interface{}) error {
 		Type:  ListAppend,
 		Key:   key,
 		Value: values,
+	}, &response)
+	return err
+}
+
+func RegisterSetType(v interface{}) {
+	gob.Register(reflect.MakeMap(reflect.MapOf(reflect.TypeOf(v), reflect.TypeOf((*struct{})(nil)).Elem())).Interface())
+}
+
+func init() {
+	RegisterSetType(int(42))
+	RegisterSetType(string("42"))
+}
+
+func (c *Client) SetAdd(key string, value interface{}) error {
+	var response Response
+	err := c.Call("Chest.SetAdd", Request{
+		Type:  SetAdd,
+		Key:   key,
+		Value: value,
 	}, &response)
 	return err
 }

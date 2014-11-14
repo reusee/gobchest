@@ -287,3 +287,28 @@ func TestListAppend(t *testing.T) {
 		}
 	}
 }
+
+func TestSetAdd(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	client := setupTestClient(t, addr)
+	defer client.Close()
+
+	client.SetAdd("foo", 1)
+	if v, ok := server.chest.Data["foo"]; !ok {
+		t.Fatalf("set not set")
+	} else {
+		if _, ok := v.(map[int]struct{})[1]; !ok {
+			t.Fatalf("key not set")
+		}
+	}
+
+	client.SetAdd("foo", 42)
+	if v, ok := server.chest.Data["foo"]; !ok {
+		t.Fatalf("set not set")
+	} else {
+		if _, ok := v.(map[int]struct{})[42]; !ok {
+			t.Fatalf("key not set")
+		}
+	}
+}

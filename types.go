@@ -12,6 +12,7 @@ var (
 	Set        RequestType = 1
 	Get        RequestType = 2
 	ListAppend RequestType = 3
+	SetAdd     RequestType = 4
 )
 
 type Request struct {
