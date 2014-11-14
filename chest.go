@@ -76,12 +76,19 @@ func (s *Chest) save() {
 	s.saveTime = time.Now()
 }
 
+func (s *Chest) changed() {
+	select {
+	case s.sigSave <- struct{}{}:
+	default:
+	}
+	s.dirty = true
+}
+
 func (s *Chest) Set(req *Request, response *Response) error {
 	s.lock.Lock()
 	s.Data[req.Key] = req.Value
 	s.lock.Unlock()
-	s.sigSave <- struct{}{}
-	s.dirty = true
+	s.changed()
 	return nil
 }
 
@@ -113,8 +120,7 @@ func (s *Chest) ListAppend(req *Request, response *Response) error {
 		}
 		s.Data[req.Key] = value.Interface()
 	}
-	s.sigSave <- struct{}{}
-	s.dirty = true
+	s.changed()
 	return nil
 }
 
@@ -130,8 +136,7 @@ func (s *Chest) SetAdd(req *Request, response *Response) error {
 		value := reflect.ValueOf(v)
 		value.SetMapIndex(reflect.ValueOf(req.Value), reflect.ValueOf(struct{}{}))
 	}
-	s.sigSave <- struct{}{}
-	s.dirty = true
+	s.changed()
 	return nil
 }
 
