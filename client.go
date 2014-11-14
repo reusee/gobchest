@@ -75,3 +75,13 @@ func (c *Client) SetAdd(key string, value interface{}) error {
 	}, &response)
 	return err
 }
+
+func (c *Client) SetExists(key string, value interface{}) bool {
+	var response Response
+	err := c.Call("Chest.SetExists", Request{
+		Type:  SetExists,
+		Key:   key,
+		Value: value,
+	}, &response)
+	return err == nil
+}

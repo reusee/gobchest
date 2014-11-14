@@ -13,6 +13,7 @@ var (
 	Get        RequestType = 2
 	ListAppend RequestType = 3
 	SetAdd     RequestType = 4
+	SetExists  RequestType = 5
 )
 
 type Request struct {

@@ -134,3 +134,17 @@ func (s *Chest) SetAdd(req *Request, response *Response) error {
 	s.dirty = true
 	return nil
 }
+
+func (s *Chest) SetExists(req *Request, response *Response) error {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	v, ok := s.Data[req.Key]
+	if !ok {
+		return fmt.Errorf("key not found: %s", req.Key)
+	} else {
+		if !reflect.ValueOf(v).MapIndex(reflect.ValueOf(req.Value)).IsValid() {
+			return fmt.Errorf("key not exists: %s %v", req.Key, req.Value)
+		}
+	}
+	return nil
+}

@@ -294,7 +294,10 @@ func TestSetAdd(t *testing.T) {
 	client := setupTestClient(t, addr)
 	defer client.Close()
 
-	client.SetAdd("foo", 1)
+	err := client.SetAdd("foo", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if v, ok := server.chest.Data["foo"]; !ok {
 		t.Fatalf("set not set")
 	} else {
@@ -303,12 +306,40 @@ func TestSetAdd(t *testing.T) {
 		}
 	}
 
-	client.SetAdd("foo", 42)
+	err = client.SetAdd("foo", 42)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if v, ok := server.chest.Data["foo"]; !ok {
 		t.Fatalf("set not set")
 	} else {
 		if _, ok := v.(map[int]struct{})[42]; !ok {
 			t.Fatalf("key not set")
 		}
+	}
+}
+
+func TestSetExists(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	client := setupTestClient(t, addr)
+	defer client.Close()
+
+	err := client.SetAdd("foo", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !client.SetExists("foo", 1) {
+		t.Fatal("should be true")
+	}
+	if client.SetExists("foo", 42) {
+		t.Fatal("should be false")
+	}
+	if client.SetExists("bar", 42) {
+		t.Fatal("should be false")
+	}
+	client.SetAdd("bar", 42)
+	if !client.SetExists("bar", 42) {
+		t.Fatal("should be true")
 	}
 }
