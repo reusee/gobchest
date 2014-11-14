@@ -90,6 +90,7 @@ func (s *Chest) Get(req *Request, response *Response) error {
 	s.lock.RLock()
 	v, ok := s.Data[req.Key]
 	if !ok {
+		s.lock.RUnlock()
 		return fmt.Errorf("key not found: %s", req.Key)
 	}
 	response.Value = v
