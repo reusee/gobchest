@@ -115,6 +115,9 @@ func (s *Chest) ListAppend(req *Request, response *Response) error {
 		s.Data[req.Key] = value.Interface()
 	} else {
 		value := reflect.ValueOf(v)
+		if value.Type().Kind() != reflect.Slice {
+			return fmt.Errorf("%s is not a slice but %T", req.Key, v)
+		}
 		for _, e := range *req.Value.(*[]interface{}) {
 			value = reflect.Append(value, reflect.ValueOf(e))
 		}

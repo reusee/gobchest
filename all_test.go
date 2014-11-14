@@ -343,3 +343,16 @@ func TestSetExists(t *testing.T) {
 		t.Fatal("should be true")
 	}
 }
+
+func TestBadListAppend(t *testing.T) {
+	server, addr := setupTestServer(t)
+	defer server.Close()
+	client := setupTestClient(t, addr)
+	defer client.Close()
+
+	client.Set("foo", 1)
+	err := client.ListAppend("foo", 1)
+	if err == nil {
+		t.Fatal("should fail")
+	}
+}
