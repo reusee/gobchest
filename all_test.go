@@ -343,7 +343,3 @@ func TestSetExists(t *testing.T) {
 		t.Fatal("should be true")
 	}
 }
-
-func TestRegister(t *testing.T) {
-	Register(new(struct{}))
-}
