@@ -219,30 +219,44 @@ func TestPeriodicSave(t *testing.T) {
 	defer server.Close()
 	client := setupTestClient(t, addr)
 	defer client.Close()
+	stop := make(chan struct{})
 	for i := 0; i < 128; i++ {
 		go func() {
 			for {
-				client.Set("foo", "foo")
+				select {
+				case <-stop:
+					return
+				default:
+					client.Set("foo", "foo")
+				}
 			}
 		}()
 	}
 	time.Sleep(time.Second * 2)
+	close(stop)
 }
 
 func TestMultipleClient(t *testing.T) {
 	server, addr := setupTestServer(t)
 	defer server.Close()
+	stop := make(chan struct{})
 	for i := 0; i < 16; i++ {
 		client := setupTestClient(t, addr)
 		defer client.Close()
 		go func() {
 			for {
-				client.Set("foo", "foo")
-				client.Get("foo")
+				select {
+				case <-stop:
+					return
+				default:
+					client.Set("foo", "foo")
+					client.Get("foo")
+				}
 			}
 		}()
 	}
 	time.Sleep(time.Second * 1)
+	close(stop)
 }
 
 func TestListAppend(t *testing.T) {
